@@ -1,18 +1,39 @@
 #!/usr/bin/ruby
 
-class Inverter
-	def initialize(delegate)
-		@delegate = delegate
+class Invert
+	def initialize(matcher)
+		@matcher = matcher
 	end
 
 	def ===(toCompare)
-		! (@delegate === toCompare)
+		! (@matcher === toCompare)
+	end
+end
+
+class Any
+	def initialize(matchers)
+		@matchers = matchers
+	end
+	def ===(toCompare)
+		@matchers.any?{|m| m === toCompare }
+	end
+end
+
+class All
+	def initialize(matchers)
+		@matchers = matchers
+	end
+	def ===(toCompare)
+		@matchers.all?{|m| m === toCompare }
 	end
 end
 
 Tabness = 8
 Flatten = ARGV.delete('-f')
-ToMatch = ARGV.delete('-v') ? [Inverter.new(Regexp.new(ARGV.shift))] : [Regexp.new(ARGV.shift)]
+ToMatch = ARGV.delete('-v') ? [Invert.new(Regexp.new(ARGV.shift))] : [Regexp.new(ARGV.shift)]
+
+p ToMatch
+exit
 
 def decide_indentation(l)
 	/^(?<stuff>\s*)/ =~ l
@@ -28,7 +49,7 @@ ARGF.each_line do |l|
 	$context.delete_if {|ind,_| ind > indentation }
 	$context[indentation] = l
 
-	next unless ToMatch.all?{|m| m === l }
+	next unless ToMatch === l
 
 	if Flatten
 		puts $context.sort.map{|ind, l| l.strip }.join(' ')
