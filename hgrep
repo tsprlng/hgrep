@@ -28,12 +28,35 @@ class All
 	end
 end
 
+def parse_matchers(args)
+	matchers = []
+	loop do
+		case args.first
+		when '-e'
+			args.shift
+			matchers << Regexp.new(args.shift)
+		when '-v'
+			args.shift
+			matchers << Invert.new(Regexp.new(args.shift))
+		else
+			break
+		end
+	end
+	All.new(matchers)
+end
+
+def parse_top_level_matcher(args)
+	case it = args.first
+	when '-e', '-v'
+		parse_matchers(args)
+	else
+		Regexp.new(it)
+	end
+end
+
 Tabness = 8
 Flatten = ARGV.delete('-f')
-ToMatch = ARGV.delete('-v') ? [Invert.new(Regexp.new(ARGV.shift))] : [Regexp.new(ARGV.shift)]
-
-p ToMatch
-exit
+ToMatch = parse_top_level_matcher(ARGV)
 
 def decide_indentation(l)
 	/^(?<stuff>\s*)/ =~ l
