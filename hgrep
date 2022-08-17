@@ -56,6 +56,7 @@ end
 
 Tabness = 8
 Flatten = ARGV.delete('-f')
+WholeTree = ARGV.delete('-t')
 ToMatch = parse_top_level_matcher(ARGV)
 
 def decide_indentation(l)
@@ -65,6 +66,7 @@ def decide_indentation(l)
 end
 
 $context = {}
+match_indentation = nil
 ARGF.each_line do |l|
 	next if /\A\s*\Z/ === l
 	indentation = decide_indentation(l)
@@ -72,7 +74,16 @@ ARGF.each_line do |l|
 	$context.delete_if {|ind,_| ind > indentation }
 	$context[indentation] = l
 
+	if match_indentation
+		if indentation>match_indentation
+			puts l
+			next
+		else
+			match_indentation = nil
+		end
+	end
 	next unless ToMatch === l
+	match_indentation = indentation
 
 	if Flatten
 		puts $context.sort.map{|ind, l| l.strip }.join(' ')
